@@ -1,12 +1,12 @@
 """Direct source-tree interface for Python 3.6 CANape workstations."""
 
+import contextlib
 import importlib
 import os
 import pathlib
 import platform
 import sys
 from collections import OrderedDict
-
 
 ROOT = pathlib.Path(__file__).resolve().parent
 SRC = ROOT / "src"
@@ -48,11 +48,8 @@ class CANapeInterface:
         if self._pycanape is not None:
             return
         if not self.dll_directory.is_dir():
-            raise FileNotFoundError(
-                "CANape API DLL directory does not exist: {}".format(
-                    self.dll_directory
-                )
-            )
+            msg = f"CANape API DLL directory does not exist: {self.dll_directory}"
+            raise FileNotFoundError(msg)
 
         current_path = os.environ.get("PATH", "")
         directory = str(self.dll_directory)
@@ -68,13 +65,10 @@ class CANapeInterface:
         try:
             self._pycanape = importlib.import_module("pycanape")
         except (FileNotFoundError, ImportError, OSError) as exc:
-            raise ImportError(
-                "Unable to load CANape API from '{}', Python {}: {}".format(
-                    self.dll_directory,
-                    platform.architecture()[0],
-                    exc,
-                )
-            ) from exc
+            msg = "Unable to load CANape API from '{}', Python {}: {}".format(
+                self.dll_directory, platform.architecture()[0], exc
+            )
+            raise ImportError(msg) from exc
         return self._pycanape
 
     def open(self):
@@ -94,7 +88,8 @@ class CANapeInterface:
 
     def _require_open(self):
         if self._canape is None or self._module is None:
-            raise RuntimeError("CANape session is not open; call open() first")
+            msg = "CANape session is not open; call open() first"
+            raise RuntimeError(msg)
 
     def close(self, close_canape=True):
         """Close the CANape session if it is open."""
@@ -144,14 +139,10 @@ class CANapeInterface:
         self._require_open()
         calibration = self._module.get_calibration_object(name)
         if check_limits and not calibration.min <= value <= calibration.max:
-            raise ValueError(
-                "Calibration value {} is outside [{}, {}] for '{}'".format(
-                    value,
-                    calibration.min,
-                    calibration.max,
-                    name,
-                )
+            msg = "Calibration value {} is outside [{}, {}] for '{}'".format(
+                value, calibration.min, calibration.max, name
             )
+            raise ValueError(msg)
         calibration.value = value
         return calibration.value
 
@@ -170,29 +161,31 @@ class CANapeInterface:
         """Configure signals and start CANape acquisition and MDF recording."""
         self._require_open()
         if self._measurement_active:
-            raise RuntimeError("A CANape measurement is already active")
+            msg = "A CANape measurement is already active"
+            raise RuntimeError(msg)
 
         signals = list(signal_names)
         if not signals:
-            raise ValueError("signal_names must contain at least one signal")
+            msg = "signal_names must contain at least one signal"
+            raise ValueError(msg)
         if polling_rate < 1:
-            raise ValueError("polling_rate must be at least 1")
+            msg = "polling_rate must be at least 1"
+            raise ValueError(msg)
 
         tasks = self._module.get_ecu_tasks()
         if not tasks:
-            raise RuntimeError("The selected CANape module has no ECU tasks")
+            msg = "The selected CANape module has no ECU tasks"
+            raise RuntimeError(msg)
         if task_name is None:
             task = next(iter(tasks.values()))
         else:
             try:
                 task = tasks[task_name]
             except KeyError:
-                raise KeyError(
-                    "ECU task '{}' was not found; available tasks: {}".format(
-                        task_name,
-                        ", ".join(tasks.keys()),
-                    )
-                ) from None
+                msg = "ECU task '{}' was not found; available tasks: {}".format(
+                    task_name, ", ".join(tasks.keys())
+                )
+                raise KeyError(msg) from None
 
         self._module.reset_data_acquisition_channels_by_module()
         for signal_name in signals:
@@ -215,10 +208,9 @@ class CANapeInterface:
             recorder.start()
             self._recorder_started = True
         except Exception:
-            try:
+            with contextlib.suppress(Exception):
                 self.stop_measurement(save_to_mdf=False)
-            except Exception:
-                pass
+
             raise
 
         self._measurement_active = True
@@ -228,7 +220,8 @@ class CANapeInterface:
         """Read current samples and map them to configured signal names."""
         self._require_open()
         if not self._measurement_active or self._task is None:
-            raise RuntimeError("No CANape measurement is active")
+            msg = "No CANape measurement is active"
+            raise RuntimeError(msg)
         samples = self._task.daq_get_current_values(len(self._signal_names))
         return OrderedDict(zip(self._signal_names, samples))
 

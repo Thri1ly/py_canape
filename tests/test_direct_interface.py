@@ -3,7 +3,6 @@ import pathlib
 import sys
 import unittest
 
-
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
@@ -35,12 +34,8 @@ class FakeTask:
         self.channels = []
         self.values = list(values or [])
 
-    def daq_setup_channel(
-        self, measurement_object_name, polling_rate, save_to_file
-    ):
-        self.channels.append(
-            (measurement_object_name, polling_rate, save_to_file)
-        )
+    def daq_setup_channel(self, measurement_object_name, polling_rate, save_to_file):
+        self.channels.append((measurement_object_name, polling_rate, save_to_file))
 
     def daq_get_current_values(self, channel_count):
         return self.values[:channel_count]
@@ -60,7 +55,8 @@ class FakeRecorder:
 
     def start(self):
         if self.fail_start:
-            raise RuntimeError("recorder start failed")
+            msg = "recorder start failed"
+            raise RuntimeError(msg)
         self.events.append("start")
 
     def stop(self, save_to_mdf=True):
@@ -158,7 +154,7 @@ class LifecycleTests(unittest.TestCase):
 
     def test_raw_canape_requires_open_session(self):
         with self.assertRaisesRegex(RuntimeError, "open"):
-            self.make_interface().raw_canape
+            _ = self.make_interface().raw_canape
 
 
 class CalibrationTests(unittest.TestCase):
@@ -215,9 +211,7 @@ class MeasurementTests(unittest.TestCase):
         )
         values = interface.read_current_values()
 
-        self.assertEqual(
-            list(values.items()), [("Speed", 100), ("Temperature", 20)]
-        )
+        self.assertEqual(list(values.items()), [("Speed", 100), ("Temperature", 20)])
         self.assertEqual(
             interface.module.tasks["Slow"].channels,
             [("Speed", 2, True), ("Temperature", 2, True)],
@@ -240,16 +234,12 @@ class MeasurementTests(unittest.TestCase):
             interface.raw_canape.selected_recorder.events[-1],
             ("stop", True),
         )
-        self.assertEqual(
-            interface.raw_canape.acquisition_events, ["start", "stop"]
-        )
+        self.assertEqual(interface.raw_canape.acquisition_events, ["start", "stop"])
 
     def test_named_task_is_selected(self):
         interface = self.make_interface()
 
-        interface.start_measurement(
-            ["Speed"], r"C:\Results\fast.mf4", task_name="Fast"
-        )
+        interface.start_measurement(["Speed"], r"C:\Results\fast.mf4", task_name="Fast")
 
         self.assertEqual(
             interface.module.tasks["Fast"].channels,
@@ -285,9 +275,7 @@ class MeasurementTests(unittest.TestCase):
             interface.start_measurement(["Speed"], r"C:\Results\test.mf4")
 
         self.assertFalse(interface.measurement_active)
-        self.assertEqual(
-            interface.raw_canape.acquisition_events, ["start", "stop"]
-        )
+        self.assertEqual(interface.raw_canape.acquisition_events, ["start", "stop"])
 
     def test_close_stops_active_measurement_before_exit(self):
         interface = self.make_interface()
