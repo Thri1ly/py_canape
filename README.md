@@ -17,6 +17,18 @@ CANape 16 DLL symbols and structure layouts have not yet been validated in
 this phase. Do not treat Python 3.6 package compatibility as confirmation of
 CANape 16 runtime compatibility.
 
+## Direct workstation usage
+
+The repository can be used directly without running `pip install .`:
+
+```python
+from canape_interface import CANapeInterface
+```
+
+See the [Python 3.6 workstation guide](docs/direct_workstation_usage_zh.md) for
+source-tree loading, CANape DLL configuration, calibration, measurement, MDF
+recording, and access to the original pyCANape objects.
+
 ## Example usage
 
 ### Open and close CANape
