@@ -75,6 +75,57 @@ class CANapeInterface:
         return self._pycanape
 
     def open(self):
-        """Load the original pyCANape module."""
-        self._load_pycanape()
+        """Open one CANape session and select the configured module."""
+        if self._canape is not None:
+            return self
+
+        pycanape = self._load_pycanape()
+        self._canape = pycanape.CANape(
+            project_path=self.project_path,
+            modal_mode=self.modal_mode,
+            clear_device_list=self.clear_device_list,
+            kill_open_instances=self.kill_open_instances,
+        )
+        self._module = self._canape.get_module_by_name(self.module_name)
         return self
+
+    def _require_open(self):
+        if self._canape is None or self._module is None:
+            raise RuntimeError("CANape session is not open; call open() first")
+
+    def close(self, close_canape=True):
+        """Close the CANape session if it is open."""
+        if self._canape is None:
+            return
+
+        canape = self._canape
+        try:
+            canape.exit(close_canape=close_canape)
+        finally:
+            self._canape = None
+            self._module = None
+
+    @property
+    def pycanape(self):
+        """Return the original imported pyCANape module."""
+        self._require_open()
+        return self._pycanape
+
+    @property
+    def raw_canape(self):
+        """Return the original pycanape.CANape object."""
+        self._require_open()
+        return self._canape
+
+    @property
+    def module(self):
+        """Return the original pycanape.Module object."""
+        self._require_open()
+        return self._module
+
+    def __enter__(self):
+        return self.open()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close(close_canape=True)
+        return False
