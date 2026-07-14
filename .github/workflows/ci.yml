@@ -89,4 +89,3 @@ jobs:
     - name: Build documentation
       run: |
         python -m sphinx -Wan --keep-going docs build
-

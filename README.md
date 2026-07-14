@@ -7,6 +7,16 @@
 This is a pythonic wrapper around the VECTOR CANape API.
 The documentation is available [here](https://pycanape.readthedocs.io/en/latest).
 
+## Compatibility branch
+
+This repository is based on pyCANape v0.6.2 and maintains installation and
+import compatibility with CPython 3.6. Dependencies used by Python 3.6 are
+pinned to compatible releases.
+
+CANape 16 DLL symbols and structure layouts have not yet been validated in
+this phase. Do not treat Python 3.6 package compatibility as confirmation of
+CANape 16 runtime compatibility.
+
 ## Example usage
 
 ### Open and close CANape
