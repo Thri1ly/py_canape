@@ -38,6 +38,12 @@ class Python36PackagingTests(unittest.TestCase):
         workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text("utf-8")
         self.assertNotIn("pip install -e", workflow)
 
+    def test_build_job_pins_a_supported_python(self):
+        workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text("utf-8")
+        build_job = workflow.split("  build:", 1)[1].split("  docs:", 1)[0]
+        self.assertIn("actions/setup-python@v5", build_job)
+        self.assertIn('python-version: "3.10"', build_job)
+
     def test_legacy_setup_entrypoint_supports_editable_installs(self):
         setup_py = (ROOT / "setup.py").read_text("utf-8")
         self.assertEqual(setup_py, "from setuptools import setup\n\nsetup()\n")
