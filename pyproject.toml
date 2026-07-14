@@ -28,6 +28,8 @@ module = [
 ignore_missing_imports = true
 
 [tool.ruff]
+# Ruff 0.0.284 cannot express Python 3.6; Python 3.7 is its oldest target.
+target-version = "py37"
 select = [
     "B",  # flake8-bugbear
     "C4",  # flake8-comprehensions
