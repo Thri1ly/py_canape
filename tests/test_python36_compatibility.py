@@ -30,6 +30,12 @@ class Python36PackagingTests(unittest.TestCase):
         workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text("utf-8")
         self.assertIn('python-version: ["3.6", "3.10"]', workflow)
 
+    def test_package_import_exposes_version_and_canape(self):
+        import pycanape
+
+        self.assertEqual(pycanape.__version__, "0.6.2")
+        self.assertTrue(hasattr(pycanape, "CANape"))
+
 
 if __name__ == "__main__":
     unittest.main()
