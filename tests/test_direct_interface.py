@@ -8,7 +8,18 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
 class FakeModule:
-    pass
+    def __init__(self):
+        self.calibrations = {}
+
+    def get_calibration_object(self, name):
+        return self.calibrations[name]
+
+
+class FakeCalibration:
+    def __init__(self, value=1.0, minimum=0.0, maximum=10.0):
+        self.value = value
+        self.min = minimum
+        self.max = maximum
 
 
 class FakeCANape:
@@ -92,6 +103,34 @@ class LifecycleTests(unittest.TestCase):
     def test_raw_canape_requires_open_session(self):
         with self.assertRaisesRegex(RuntimeError, "open"):
             self.make_interface().raw_canape
+
+
+class CalibrationTests(unittest.TestCase):
+    def make_interface(self):
+        from canape_interface import CANapeInterface
+
+        return CANapeInterface(
+            dll_directory="ignored-for-injected-api",
+            project_path=r"C:\CANapeProjects\Demo",
+            module_name="ECU",
+            _pycanape_module=FakePyCANape(),
+        )
+
+    def test_read_and_write_calibration(self):
+        interface = self.make_interface().open()
+        calibration = FakeCalibration()
+        interface.module.calibrations["Gain"] = calibration
+
+        self.assertEqual(interface.read_calibration("Gain"), 1.0)
+        self.assertEqual(interface.write_calibration("Gain", 2.5), 2.5)
+        self.assertEqual(calibration.value, 2.5)
+
+    def test_write_rejects_value_outside_a2l_limits(self):
+        interface = self.make_interface().open()
+        interface.module.calibrations["Gain"] = FakeCalibration()
+
+        with self.assertRaisesRegex(ValueError, "outside"):
+            interface.write_calibration("Gain", 11.0)
 
 
 if __name__ == "__main__":

@@ -123,6 +123,28 @@ class CANapeInterface:
         self._require_open()
         return self._module
 
+    def read_calibration(self, name):
+        """Read the physical value of a scalar calibration object."""
+        self._require_open()
+        calibration = self._module.get_calibration_object(name)
+        return calibration.value
+
+    def write_calibration(self, name, value, check_limits=True):
+        """Write and read back a scalar calibration object's physical value."""
+        self._require_open()
+        calibration = self._module.get_calibration_object(name)
+        if check_limits and not calibration.min <= value <= calibration.max:
+            raise ValueError(
+                "Calibration value {} is outside [{}, {}] for '{}'".format(
+                    value,
+                    calibration.min,
+                    calibration.max,
+                    name,
+                )
+            )
+        calibration.value = value
+        return calibration.value
+
     def __enter__(self):
         return self.open()
 
