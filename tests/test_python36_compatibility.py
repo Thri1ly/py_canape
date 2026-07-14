@@ -29,6 +29,19 @@ class Python36PackagingTests(unittest.TestCase):
         workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text("utf-8")
         self.assertIn('python-version: ["3.6", "3.10"]', workflow)
 
+    def test_ci_uses_supported_artifact_action(self):
+        workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text("utf-8")
+        self.assertIn("actions/upload-artifact@v4", workflow)
+        self.assertNotIn("actions/upload-artifact@v3", workflow)
+
+    def test_ci_does_not_require_editable_build_support(self):
+        workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text("utf-8")
+        self.assertNotIn("pip install -e", workflow)
+
+    def test_legacy_setup_entrypoint_supports_editable_installs(self):
+        setup_py = (ROOT / "setup.py").read_text("utf-8")
+        self.assertEqual(setup_py, "from setuptools import setup\n\nsetup()\n")
+
     def test_package_import_exposes_version_and_canape(self):
         import pycanape
 
